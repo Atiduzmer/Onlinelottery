@@ -1,0 +1,20 @@
+# Dependencies and package-manager caches
+node_modules/
+.npm-cache/
+.npmrc
+
+# Build output
+dist/
+
+# Local runtime files
+*.log
+server.err
+
+# Environment and editor files
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

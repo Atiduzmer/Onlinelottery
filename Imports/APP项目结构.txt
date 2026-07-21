@@ -1,0 +1,199 @@
+一、整体架构
+
+Kotlin Multiplatform App
+        │
+        │ HTTPS + WebSocket
+        ▼
+API Gateway / WAF
+        │
+        ▼
+Kotlin + Spring Boot 后端
+        │
+        ├── 用户认证
+        ├── 实名认证
+        ├── 年龄校验
+        ├── 赛事中心
+        ├── 投注订单
+        ├── 官方出票
+        ├── 钱包账本
+        ├── 充值支付
+        ├── 奖金结算
+        ├── 提现审核
+        ├── 风险控制
+        └── 审计监管
+        │
+        ├── PostgreSQL
+        ├── Redis
+        ├── 消息队列
+        ├── 对象存储
+        └── 日志审计平台
+
+二、App 技术
+
+Kotlin Multiplatform
+Compose Multiplatform
+Ktor Client
+Coroutines + Flow
+Koin
+SQLDelight
+Kotlinx Serialization
+WebSocket
+原生生物识别
+设备安全检测
+
+App划分：
+
+app/
+├── login             登录和实名认证
+├── home              首页大厅
+├── lottery           彩种和玩法
+├── match             赛事列表
+├── betting           投注单
+├── order             订单记录
+├── wallet            资金和账单
+├── withdraw          提现
+├── notification      消息
+├── profile           个人中心
+├── responsible       责任彩票
+└── security          设备和安全
+
+三、后端技术
+
+Kotlin
+Spring Boot
+Spring Security
+PostgreSQL
+Redis
+Kafka 或可靠消息队列
+OpenTelemetry
+Prometheus
+Grafana
+Loki
+Docker
+Kubernetes 或托管容器平台
+
+server/
+├── auth
+├── identity
+├── user
+├── lottery
+├── match
+├── odds
+├── betting
+├── ticket
+├── wallet
+├── payment
+├── settlement
+├── withdrawal
+├── risk
+├── notification
+├── audit
+└── admin
+
+资金系统结构：
+
+钱包账户
+资金交易
+借方分录
+贷方分录
+充值订单
+投注订单
+出票记录
+派奖记录
+提现订单
+支付回调
+银行对账
+人工调整记录
+
+使用双重记账：
+
+用户充值：
+支付渠道待结算账户  →  用户可用账户
+
+用户投注：
+用户可用账户        →  投注冻结账户
+
+出票成功：
+投注冻结账户        →  彩票销售资金账户
+
+出票失败：
+投注冻结账户        →  用户可用账户
+
+用户中奖：
+奖金结算账户        →  用户奖金账户
+
+用户提现：
+用户奖金账户        →  提现冻结账户
+
+管理后台：
+
+采用：
+
+React
+Next.js
+TypeScript
+Ant Design
+TanStack Query
+ECharts
+
+主要页面：
+
+用户管理
+实名认证审核
+设备管理
+赛事管理
+投注订单
+出票监控
+充值订单
+提现审核
+钱包流水
+派奖结算
+风险预警
+名单管理
+投诉处理
+消息公告
+渠道对账
+监管报表
+操作日志
+权限管理
+系统配置
+
+数据库关键表：
+
+Users
+UserIdentities
+UserDevices
+UserBankCards
+UserRiskProfiles
+
+LotteryGames
+LotteryPlayTypes
+Matches
+MatchMarkets
+OddsSnapshots
+
+BetOrders
+BetOrderItems
+TicketOrders
+OfficialTickets
+OrderStatusHistories
+
+WalletAccounts
+AccountingEntries
+WalletTransactions
+RechargeOrders
+WithdrawalOrders
+PaymentCallbacks
+
+SettlementJobs
+SettlementRecords
+PrizeRecords
+RefundRecords
+
+RiskEvents
+RiskRules
+ManualReviews
+AuditLogs
+OperationLogs
+
+所有订单金额使用整数“分”存储，不能使用浮点数。
