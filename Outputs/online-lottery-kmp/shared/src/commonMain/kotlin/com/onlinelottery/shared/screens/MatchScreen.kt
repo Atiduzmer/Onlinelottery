@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,6 +37,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -49,9 +51,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.onlinelottery.shared.components.SurfaceCard
-import com.onlinelottery.shared.model.MatchInfo
-import com.onlinelottery.shared.model.basketballMatchList
-import com.onlinelottery.shared.model.matchList
+import com.onlinelottery.shared.model.CalculatorMatch
+import com.onlinelottery.shared.model.CalculatorSport
+import com.onlinelottery.shared.model.loadCalculatorMatches
 import com.onlinelottery.shared.theme.AlertRed
 import com.onlinelottery.shared.theme.BrandBlue
 import com.onlinelottery.shared.theme.BrandBlueSoft
@@ -69,11 +71,25 @@ fun MatchScreen(
 ) {
     var sport by remember(initialSport) { mutableStateOf(initialSport) }
     var playType by remember { mutableStateOf("竞彩") }
-    var selectedDay by remember { mutableStateOf("今天") }
+    var selectedDay by remember(sport) { mutableStateOf("") }
     var selectedOdds by remember { mutableStateOf(setOf<String>()) }
     var showBetSlip by remember { mutableStateOf(false) }
     var stake by remember { mutableIntStateOf(20) }
     var submitted by remember { mutableStateOf(false) }
+    var matchList by remember(sport) { mutableStateOf<List<CalculatorMatch>>(emptyList()) }
+    var isLoading by remember(sport) { mutableStateOf(true) }
+    var requestVersion by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(sport, requestVersion) {
+        isLoading = true
+        selectedOdds = emptySet()
+        val targetSport = if (sport == "足球") CalculatorSport.Football else CalculatorSport.Basketball
+        val loaded = runCatching { loadCalculatorMatches(targetSport) }.getOrNull().orEmpty()
+        matchList = loaded
+        if (selectedDay !in loaded.map { it.businessDate }) selectedDay = loaded.firstOrNull()?.businessDate.orEmpty()
+        if (loaded.isEmpty() && requestVersion > 0) notify("赛事数据暂不可用，请稍后刷新")
+        isLoading = false
+    }
 
     Box(
         modifier = Modifier
@@ -125,7 +141,7 @@ fun MatchScreen(
                         FilterPill("篮球", sport == "篮球", Icons.Default.Favorite) { sport = "篮球" }
                     }
                     Spacer(Modifier.weight(1f))
-                    FilterPill("开奖公告", false, Icons.Default.DateRange) { notify("开奖公告即将开放") }
+                    FilterPill(if (isLoading) "加载中" else "刷新", false, Icons.Default.DateRange) { requestVersion += 1 }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     listOf("竞彩", "北单", "足彩").forEach { item ->
@@ -135,18 +151,15 @@ fun MatchScreen(
                         }
                     }
                 }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    listOf("周一\n07/20", "今天\n07/21", "周三\n07/22", "周四\n07/23").forEach { item ->
-                        val key = item.substringBefore("\n")
-                        DayTab(item, selectedDay == key) { selectedDay = key }
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(matchList.map { it.businessDate }.distinct().size) { index ->
+                        val date = matchList.map { it.businessDate }.distinct()[index]
+                        DayTab(date.removePrefix("2026-"), selectedDay == date) { selectedDay = date }
                     }
                 }
             }
 
-            val currentMatches = if (sport == "足球") matchList else basketballMatchList
+            val currentMatches = matchList.filter { selectedDay.isBlank() || it.businessDate == selectedDay }
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
@@ -157,12 +170,16 @@ fun MatchScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(11.dp),
             ) {
+                if (isLoading) {
+                    item { MatchLoadState("正在读取官方赛事与赔率…") }
+                } else if (currentMatches.isEmpty()) {
+                    item { MatchLoadState("暂时没有可投注赛事，点击刷新后重试") }
+                }
                 items(currentMatches.size) { index ->
                     val match = currentMatches[index]
                     MatchCard(
                         match = match,
                         selectedOdds = selectedOdds,
-                        sport = sport,
                     ) { oddsIndex ->
                         val key = "${match.id}-$oddsIndex"
                         selectedOdds = if (key in selectedOdds) selectedOdds - key else selectedOdds + key
@@ -277,20 +294,16 @@ private fun DayTab(label: String, selected: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun MatchCard(
-    match: MatchInfo,
+    match: CalculatorMatch,
     selectedOdds: Set<String>,
-    sport: String,
     onSelectOdd: (Int) -> Unit,
 ) {
     SurfaceCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(13.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("周二${match.id} · ${match.league}", color = SecondaryText, style = MaterialTheme.typography.bodySmall)
+                Text("${match.number} · ${match.league}", color = SecondaryText, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.weight(1f))
-                Text(match.time, color = if (match.isLive) LiveGreen else SecondaryText, fontWeight = FontWeight.Medium)
-                if (match.isLive) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = "正在直播", tint = LiveGreen, modifier = Modifier.padding(start = 7.dp).size(19.dp))
-                }
+                Text(match.time, color = SecondaryText, fontWeight = FontWeight.Medium)
             }
             Row(
                 modifier = Modifier
@@ -301,18 +314,17 @@ private fun MatchCard(
                 TeamName(match.home, Modifier.weight(1f))
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(92.dp)) {
                     Text(
-                        match.score,
-                        color = if (match.isLive) LiveGreen else MaterialTheme.colorScheme.onSurface,
+                        if (match.status == "Selling") "VS" else match.status,
+                        color = if (match.status == "Selling") MaterialTheme.colorScheme.onSurface else LiveGreen,
                         style = MaterialTheme.typography.headlineSmall,
                     )
-                    Text(match.half, color = if (match.isLive) AlertRed else SecondaryText, style = MaterialTheme.typography.bodySmall)
+                    Text(if (match.status == "Selling") "销售中" else "已停售", color = if (match.status == "Selling") AlertRed else SecondaryText, style = MaterialTheme.typography.bodySmall)
                 }
                 TeamName(match.away, Modifier.weight(1f))
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text("竞彩SP", color = SecondaryText, style = MaterialTheme.typography.bodySmall)
-                val labels = if (sport == "足球") listOf("胜", "平", "负") else listOf("主胜", "让分", "客胜")
-                labels.forEachIndexed { index, label ->
+                Text(match.oddsTitle + " SP", color = SecondaryText, style = MaterialTheme.typography.bodySmall)
+                match.odds.forEachIndexed { index, odd ->
                     val selected = "${match.id}-$index" in selectedOdds
                     Column(
                         modifier = Modifier
@@ -323,12 +335,24 @@ private fun MatchCard(
                             .padding(vertical = 7.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text(label, color = if (selected) Color.White else SecondaryText, style = MaterialTheme.typography.bodySmall)
-                        Text(match.odds[index], color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
+                        Text(odd.label, color = if (selected) Color.White else SecondaryText, style = MaterialTheme.typography.bodySmall)
+                        Text(odd.value, color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MatchLoadState(message: String) {
+    SurfaceCard(Modifier.fillMaxWidth()) {
+        Text(
+            message,
+            color = SecondaryText,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 28.dp),
+        )
     }
 }
 
