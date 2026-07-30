@@ -100,7 +100,7 @@ private fun P5Header(isRefreshing: Boolean, onBack: () -> Unit, onRefresh: () ->
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 4.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

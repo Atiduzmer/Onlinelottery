@@ -1,13 +1,15 @@
 package com.onlinelottery.shared.screens
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,173 +19,202 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import com.onlinelottery.shared.components.QuickAction
-import com.onlinelottery.shared.components.SectionHeader
-import com.onlinelottery.shared.components.SurfaceCard
 import com.onlinelottery.shared.generated.resources.Res
-import com.onlinelottery.shared.generated.resources.reference_home
+import com.onlinelottery.shared.generated.resources.hall_card_basketball
+import com.onlinelottery.shared.generated.resources.hall_card_football
+import com.onlinelottery.shared.generated.resources.hall_card_pick3
+import com.onlinelottery.shared.generated.resources.hall_card_pick5
+import com.onlinelottery.shared.generated.resources.hall_card_seven_star
+import com.onlinelottery.shared.generated.resources.hall_card_super_lotto
+import com.onlinelottery.shared.generated.resources.hall_hero_trophy
 import com.onlinelottery.shared.model.LotteryGame
 import com.onlinelottery.shared.model.lotteryGames
+import com.onlinelottery.shared.theme.DarkPageBackground
+import com.onlinelottery.shared.theme.DarkSecondary
 import com.onlinelottery.shared.theme.BrandBlue
-import com.onlinelottery.shared.theme.LiveGreen
+import com.onlinelottery.shared.theme.PageBackground
 import com.onlinelottery.shared.theme.PrimaryText
 import com.onlinelottery.shared.theme.SecondaryText
-import com.onlinelottery.shared.theme.WarmAmber
-import org.jetbrains.compose.resources.imageResource
+import com.onlinelottery.shared.theme.isDarkTheme
+import org.jetbrains.compose.resources.painterResource
+import androidx.compose.ui.layout.ContentScale
+import org.jetbrains.compose.resources.DrawableResource
 
 @Composable
 fun HomeScreen(
     contentPadding: PaddingValues,
-    notify: (String) -> Unit,
     openMatches: () -> Unit,
+    openMessages: () -> Unit,
     openLottery: (LotteryGame) -> Unit,
 ) {
-    var hallMode by remember { mutableStateOf("合买大厅") }
-
-    LazyColumn(
+    val dark = isDarkTheme()
+    val page = if (dark) DarkPageBackground else PageBackground
+    val text = if (dark) Color.White else PrimaryText
+    val muted = if (dark) DarkSecondary else SecondaryText
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(page),
+    ) {
+      LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
             start = 14.dp,
-            top = contentPadding.calculateTopPadding() + 10.dp,
+            top = contentPadding.calculateTopPadding() + 14.dp,
             end = 14.dp,
-            bottom = contentPadding.calculateBottomPadding() + 18.dp,
+            bottom = contentPadding.calculateBottomPadding() + 26.dp,
         ),
         verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
+      ) {
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Column {
-                    Text("线下店铺", color = BrandBlue, style = MaterialTheme.typography.titleMedium)
-                    Text("实体出票", style = MaterialTheme.typography.headlineSmall)
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("购彩大厅", color = text, style = MaterialTheme.typography.headlineSmall)
+                    Text("公平 · 公正 · 透明", color = muted, style = MaterialTheme.typography.bodyMedium)
                 }
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xFFFFF1C8))
-                        .clickable { notify("已开启理性购彩提醒") }
-                        .padding(horizontal = 10.dp, vertical = 7.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(5.dp),
-                ) {
-                    Icon(Icons.Default.Lock, contentDescription = null, tint = WarmAmber, modifier = Modifier.size(18.dp))
-                    Text("放心玩", color = Color(0xFF8C6500), style = MaterialTheme.typography.labelMedium)
-                }
-            }
-        }
-
-        item { HeroBanner() }
-
-        item {
-            SurfaceCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("账户余额", color = SecondaryText, style = MaterialTheme.typography.bodyMedium)
-                    Text("¥ 8,101.84", style = MaterialTheme.typography.headlineSmall)
-                    Row(
+                Box {
+                    CircleIconButton(Icons.Default.Notifications, "消息通知", dark, openMessages)
+                    Text(
+                        "3",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                    ) {
-                        QuickAction("投诉", Icons.Default.Call, WarmAmber, { notify("投诉入口已打开") }, Modifier.weight(1f))
-                        QuickAction("店主", Icons.Default.Phone, BrandBlue, { notify("已为你联系店主") }, Modifier.weight(1f))
-                        QuickAction("微信", Icons.Default.Share, LiveGreen, { notify("分享卡片已准备") }, Modifier.weight(1f))
-                        QuickAction("邀请", Icons.Default.Email, Color(0xFF925BEA), { notify("邀请码已复制") }, Modifier.weight(1f))
-                    }
+                            .align(Alignment.TopEnd)
+                            .clip(CircleShape)
+                            .background(Color(0xFFFF453A))
+                            .padding(horizontal = 4.dp, vertical = 1.dp),
+                    )
                 }
             }
         }
-
+        item { HallHeroBanner(onClick = openMatches) }
         item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(BrandBlue),
-            ) {
-                HallChoice(
-                    modifier = Modifier.weight(1f),
-                    title = "合买大厅",
-                    subtitle = "参与发起合买",
-                    icon = Icons.Default.Person,
-                    selected = hallMode == "合买大厅",
-                ) {
-                    hallMode = "合买大厅"
-                    notify("已切换至合买大厅")
-                }
-                HallChoice(
-                    modifier = Modifier.weight(1f),
-                    title = "跟单大厅",
-                    subtitle = "发单赚佣金",
-                    icon = Icons.Default.List,
-                    selected = hallMode == "跟单大厅",
-                ) {
-                    hallMode = "跟单大厅"
-                    notify("已切换至跟单大厅")
-                }
-            }
-        }
-
-        item {
-            SurfaceCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(horizontal = 14.dp, vertical = 16.dp)) {
-                    SectionHeader("彩种选择", "全部", openMatches)
-                    lotteryGames.chunked(4).forEach { rowItems ->
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("选择彩种", color = text, style = MaterialTheme.typography.titleMedium)
+                lotteryGames.chunked(2).forEach { rowItems ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                .height(136.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             rowItems.forEachIndexed { index, game ->
-                                LotteryTile(
+                                PremiumLotteryCard(
                                     game = game,
-                                    icon = lotteryIcons[(lotteryGames.indexOf(game)) % lotteryIcons.size],
                                     modifier = Modifier.weight(1f),
                                 ) {
                                     openLottery(game)
                                 }
                             }
-                            repeat(4 - rowItems.size) {
+                            repeat(2 - rowItems.size) {
                                 Box(Modifier.weight(1f))
                             }
                         }
-                    }
+                }
+            }
+        }
+      }
+    }
+}
+
+@Composable
+private fun CircleIconButton(
+    icon: ImageVector,
+    label: String,
+    dark: Boolean,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(42.dp)
+            .clip(CircleShape)
+            .background(if (dark) Color.White.copy(alpha = 0.07f) else BrandBlue.copy(alpha = 0.08f))
+            .border(1.dp, if (dark) Color.White.copy(alpha = 0.16f) else BrandBlue.copy(alpha = 0.16f), CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, contentDescription = label, tint = if (dark) Color.White else PrimaryText, modifier = Modifier.size(20.dp))
+    }
+}
+
+@Composable
+private fun PremiumLotteryCard(
+    game: LotteryGame,
+    modifier: Modifier,
+    onClick: () -> Unit,
+) {
+    val shape = RoundedCornerShape(22.dp)
+    val subtitle = when (game.kind) {
+        com.onlinelottery.shared.model.LotteryKind.Football -> "精彩赛事 · 等你来猜"
+        com.onlinelottery.shared.model.LotteryKind.Basketball -> "NBA · CBA 热血对决"
+        com.onlinelottery.shared.model.LotteryKind.SuperLotto -> "小梦想 · 大乐透"
+        com.onlinelottery.shared.model.LotteryKind.Pick3 -> "天天开奖 · 玩法简单"
+        com.onlinelottery.shared.model.LotteryKind.Pick5 -> "中奖更易 · 奖金更高"
+        com.onlinelottery.shared.model.LotteryKind.SevenStar -> "幸运之星 · 由你点亮"
+    }
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .clip(shape)
+            .border(1.dp, Color.White.copy(alpha = 0.15f), shape)
+            .clickable(onClick = onClick),
+    ) {
+        Image(
+            painter = painterResource(cardBackground(game)),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                        Brush.linearGradient(
+                        listOf(Color.Black.copy(alpha = 0.05f), Color.Black.copy(alpha = 0.52f)),
+                    ),
+                ),
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(game.name, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.weight(1f))
+                Icon(Icons.Default.Star, contentDescription = null, tint = Color.White.copy(alpha = 0.72f), modifier = Modifier.size(17.dp))
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(subtitle, color = Color.White.copy(alpha = 0.72f), style = MaterialTheme.typography.bodySmall)
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White.copy(alpha = 0.16f))
+                        .clickable(onClick = onClick)
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(if (game.kind == com.onlinelottery.shared.model.LotteryKind.Football || game.kind == com.onlinelottery.shared.model.LotteryKind.Basketball) "立即竞猜" else "立即选号", color = Color.White, style = MaterialTheme.typography.bodySmall)
+                    Text("›", color = Color.White.copy(alpha = 0.8f), modifier = Modifier.padding(start = 5.dp))
                 }
             }
         }
@@ -191,97 +222,52 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HeroBanner() {
-    val sourceImage = imageResource(Res.drawable.reference_home)
-    Canvas(
+private fun HallHeroBanner(onClick: () -> Unit) {
+    val shape = RoundedCornerShape(22.dp)
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(206.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .semantics { contentDescription = "2026体育赛事活动" },
+            .height(142.dp)
+            .clip(shape)
+            .border(1.dp, Color(0xFFFFD98A).copy(alpha = 0.38f), shape)
+            .clickable(onClick = onClick),
     ) {
-        drawImage(
-            image = sourceImage,
-            srcOffset = IntOffset(0, 350),
-            srcSize = IntSize(1280, 720),
-            dstOffset = IntOffset.Zero,
-            dstSize = IntSize(size.width.toInt(), size.height.toInt()),
+        Image(
+            painter = painterResource(Res.drawable.hall_hero_trophy),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
         )
-    }
-}
-
-@Composable
-private fun HallChoice(
-    modifier: Modifier,
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = modifier
-            .background(if (selected) Color.White.copy(alpha = 0.13f) else Color.Transparent)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 13.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        Icon(icon, contentDescription = title, tint = Color.White, modifier = Modifier.size(27.dp))
-        Column(Modifier.padding(start = 9.dp)) {
-            Text(title, color = Color.White, fontWeight = FontWeight.SemiBold)
-            Text(subtitle, color = Color.White.copy(alpha = 0.72f), style = MaterialTheme.typography.bodySmall)
+        Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(listOf(Color(0xFF050B16).copy(alpha = 0.18f), Color.Transparent))))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 18.dp, top = 18.dp, bottom = 15.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text("精彩不停  好运常在", color = Color(0xFFFFE0A5), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("随时随地  畅享竞猜乐趣", color = Color.White.copy(alpha = 0.74f), style = MaterialTheme.typography.bodySmall)
+            }
+            Text(
+                "立即参与  ›",
+                color = Color(0xFF392207),
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(Color(0xFFFFCE72))
+                    .padding(horizontal = 14.dp, vertical = 7.dp),
+            )
         }
     }
 }
 
-private val lotteryIcons = listOf(
-    Icons.Default.Star,
-    Icons.Default.Favorite,
-    Icons.Default.CheckCircle,
-    Icons.Default.List,
-    Icons.Default.ShoppingCart,
-    Icons.Default.DateRange,
-)
-
-@Composable
-private fun LotteryTile(
-    game: LotteryGame,
-    icon: ImageVector,
-    modifier: Modifier,
-    onClick: () -> Unit,
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = game.name,
-            tint = Color.White,
-            modifier = Modifier
-                .size(52.dp)
-                .background(Color(game.tone), RoundedCornerShape(15.dp))
-                .padding(12.dp),
-        )
-        Text(
-            text = game.name,
-            color = PrimaryText,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            modifier = Modifier.padding(top = 7.dp),
-        )
-        Text(
-            text = game.description,
-            color = SecondaryText,
-            style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-        )
-    }
+private fun cardBackground(game: LotteryGame): DrawableResource = when (game.kind) {
+    com.onlinelottery.shared.model.LotteryKind.Football -> Res.drawable.hall_card_football
+    com.onlinelottery.shared.model.LotteryKind.Basketball -> Res.drawable.hall_card_basketball
+    com.onlinelottery.shared.model.LotteryKind.SuperLotto -> Res.drawable.hall_card_super_lotto
+    com.onlinelottery.shared.model.LotteryKind.Pick3 -> Res.drawable.hall_card_pick3
+    com.onlinelottery.shared.model.LotteryKind.Pick5 -> Res.drawable.hall_card_pick5
+    com.onlinelottery.shared.model.LotteryKind.SevenStar -> Res.drawable.hall_card_seven_star
 }

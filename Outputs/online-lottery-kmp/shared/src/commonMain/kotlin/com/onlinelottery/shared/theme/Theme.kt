@@ -2,7 +2,9 @@ package com.onlinelottery.shared.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -10,16 +12,25 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-val BrandBlue = Color(0xFF3968F5)
-val BrandBlueSoft = Color(0xFFEAF0FF)
-val LiveGreen = Color(0xFF26B979)
-val AlertRed = Color(0xFFEF5350)
-val WarmAmber = Color(0xFFFFAA22)
-val PageBackground = Color(0xFFF5F6F8)
-val PrimaryText = Color(0xFF1D2026)
-val SecondaryText = Color(0xFF8D939D)
+// Apple-inspired semantic palette: system blue on a grouped light background.
+val BrandBlue = Color(0xFF007AFF)
+val BrandNavy = Color(0xFF1C1C1E)
+val BrandBlueSoft = Color(0xFFEAF3FF)
+val LiveGreen = Color(0xFF34C759)
+val MintSoft = Color(0xFFE9F9EE)
+val AlertRed = Color(0xFFFF3B30)
+val WarmAmber = Color(0xFFFF9500)
+val PageBackground = Color(0xFFF2F2F7)
+val PrimaryText = Color(0xFF1C1C1E)
+val SecondaryText = Color(0xFF8E8E93)
+val CardBorder = Color(0xFFE5E5EA)
+val DarkPageBackground = Color(0xFF05070C)
+val DarkSurface = Color(0xFF111722)
+val DarkSecondary = Color(0xFF9AA7B8)
 
-private val AppColors = lightColorScheme(
+enum class AppThemeMode { System, Light, Dark }
+
+private val LightColors = lightColorScheme(
     primary = BrandBlue,
     onPrimary = Color.White,
     primaryContainer = BrandBlueSoft,
@@ -30,44 +41,60 @@ private val AppColors = lightColorScheme(
     onBackground = PrimaryText,
     surface = Color.White,
     onSurface = PrimaryText,
-    surfaceVariant = Color(0xFFF0F2F5),
+    surfaceVariant = Color(0xFFE5E5EA),
     onSurfaceVariant = SecondaryText,
-    outline = Color(0xFFE3E6EB),
+    outline = CardBorder,
+)
+
+private val DarkColors = darkColorScheme(
+    primary = Color(0xFF4F8CFF),
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFF17356B),
+    onPrimaryContainer = Color(0xFFD9E6FF),
+    secondary = Color(0xFF63D98A),
+    error = Color(0xFFFF6961),
+    background = DarkPageBackground,
+    onBackground = Color(0xFFF5F5F7),
+    surface = DarkSurface,
+    onSurface = Color(0xFFF5F5F7),
+    surfaceVariant = Color(0xFF1C2432),
+    onSurfaceVariant = DarkSecondary,
+    outline = Color(0xFF394354),
 )
 
 private val AppTypography = Typography(
     headlineSmall = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Bold,
-        fontSize = 23.sp,
-        lineHeight = 30.sp,
+        fontSize = 26.sp,
+        lineHeight = 32.sp,
     ),
     titleLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 20.sp,
-        lineHeight = 26.sp,
+        lineHeight = 25.sp,
     ),
     titleMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp,
+        fontWeight = FontWeight.Medium,
+        fontSize = 17.sp,
         lineHeight = 22.sp,
     ),
     bodyLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontSize = 16.sp,
-        lineHeight = 23.sp,
+        lineHeight = 22.sp,
     ),
     bodyMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
-        fontSize = 14.sp,
+        fontSize = 15.sp,
         lineHeight = 20.sp,
     ),
     bodySmall = TextStyle(
         fontFamily = FontFamily.SansSerif,
-        fontSize = 12.sp,
-        lineHeight = 17.sp,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
     ),
     labelMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
@@ -78,10 +105,21 @@ private val AppTypography = Typography(
 )
 
 @Composable
-fun OnlineLotteryTheme(content: @Composable () -> Unit) {
+fun OnlineLotteryTheme(
+    mode: AppThemeMode = AppThemeMode.System,
+    content: @Composable () -> Unit,
+) {
+    val dark = when (mode) {
+        AppThemeMode.System -> isSystemInDarkTheme()
+        AppThemeMode.Light -> false
+        AppThemeMode.Dark -> true
+    }
     MaterialTheme(
-        colorScheme = AppColors,
+        colorScheme = if (dark) DarkColors else LightColors,
         typography = AppTypography,
         content = content,
     )
 }
+
+@Composable
+fun isDarkTheme(): Boolean = MaterialTheme.colorScheme.background == DarkPageBackground

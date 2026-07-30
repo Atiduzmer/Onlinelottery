@@ -110,7 +110,7 @@ private fun QixingHeader(isRefreshing: Boolean, onBack: () -> Unit, onRefresh: (
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 4.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -237,7 +237,7 @@ private fun QixingPrizeRow(prize: QixingPrize, header: Boolean) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (header) Color(0xFFF3F5F8) else Color.White)
+            .background(if (header) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)
             .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

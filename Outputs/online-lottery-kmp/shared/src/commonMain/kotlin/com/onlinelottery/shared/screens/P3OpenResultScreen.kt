@@ -95,7 +95,7 @@ fun P3OpenResultScreen(
 @Composable
 private fun P3Header(isRefreshing: Boolean, onBack: () -> Unit, onRefresh: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color.White).padding(horizontal = 4.dp, vertical = 3.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surface).padding(horizontal = 4.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "返回排列三") }

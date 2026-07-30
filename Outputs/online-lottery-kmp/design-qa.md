@@ -1,48 +1,64 @@
-# 设计与运行验收
+# 个人中心参考图还原 QA
 
-## 依据
+## Source visual truth
 
-- `Imports/APP项目结构.txt`
-- `Imports/ReferenceImage2.jpg`：大厅页
-- `Imports/ReferenceImage4.jpg`：比赛页
-- `Imports/ReferenceImage3.jpg`：个人页
+- Source: `D:/ProgramData/Image/9a79bc1b-3524-4fd1-a81c-b38162b65620.png`
+- Source pixels: 863 × 1822
+- Target state: 深色个人中心、顶部账户信息、余额卡、订单、快捷入口、安全设置、底部导航
 
-## 验收环境
+## Implementation evidence
 
-- Android Emulator：Medium Phone，1080 × 2400
-- Android SDK：36
-- APK：`androidApp-debug.apk`
+- Screenshot: `qa/profile-qa-final-20260728.png`
+- Implementation pixels: 1080 × 2400
+- Device: Android emulator `emulator-5554`
+- Combined comparison: `qa/profile-compare-final-20260728.png` (same final layout; final capture path above includes the last APK install)
+- Normalization: 两张图均缩放到 1080px 内容宽度后进行左右对比；实现截图保留系统状态栏与导航栏，用于检查深色系统栏是否跟随主题。
 
-## 已验证
+## Findings and fixes
 
-- 大厅、比赛、个人三个底部导航页均能切换。
-- 大厅页横幅使用参考图真实素材，并保持目标裁切比例。
-- 比赛页赔率可选中，底部投注单可打开，金额加减和确认入口可用。
-- 个人页余额可隐藏/显示，提现弹层可打开并填写金额。
-- 最终 APK 已在模拟器重新安装并冷启动成功。
-- 最近 1000 行 AndroidRuntime 日志中未发现 FATAL EXCEPTION 或 ANR。
-- 大乐透选号页新增“开奖详情”入口，可进入最新及往期开奖详情。
-- 新浪开奖接口已在本机验证：不带期号返回最新 `26081` 期；指定 `issueNo=26080` 返回参考图中的红球、蓝球、销量、奖池和 9 条奖项明细。
-- 开奖详情页会读取最新期及前 8 期；接口不可用时保留 `26080`、`26079` 两期本地兜底数据。
-- 七星彩选号页新增“开奖详情”入口，读取体彩 `gameNo=04` 历史接口，展示最新一期、最近 30 期切换、7 位开奖号码和 6 个奖级。
-- 七星彩接口已在本机验证：最新 `26083` 期，开奖号码 `5 2 1 9 6 3 12`，接口返回 30 条往期记录。
+- [P1] 余额卡缺少真实装饰资产。参考图右侧有低对比足球与金色光晕，原实现只有代码渐变。已生成并接入 `profile_balance_gold.png`，保留左侧文字可读负空间。
+- [P1] 头像球体质感不足。已生成并接入 `profile_football_avatar.png`，增加蓝色球体、金属边缘和金色反光。
+- [P1] 深色系统栏与底部导航未完全跟随主题。已在 Android 宿主同步状态栏、导航栏颜色与明暗图标模式，并修正根容器背景覆盖系统栏区域。
+- [P2] 页面纵向节奏比参考图偏松，导致“设置”行被底部导航遮挡。已压缩卡片内边距、快捷入口行距、区块间距；现在四行安全设置可见，整体层级与参考图更接近。
+- [P2] 订单状态图标使用统一图标库的不同图标表达，笔触与参考图仍有差异。保留为可访问的 Material vector 图标，避免使用占位符或文字 glyph；后续可继续替换为品牌 SVG 图标集。
 
-## 已知差异
+## Required fidelity surfaces
 
-- 参考图未提供独立彩种图标、球队徽章和应用图标素材，因此使用 Compose 标准核心图标替代。
-- 业务数据、充值、提现、投注和开奖均为本地模拟，不会产生真实交易。
-- 模拟器在本轮冷启动时发生 System UI 无响应并退出，故本次新增开奖详情页已完成编译和接口字段验证，待设备稳定后可补充安装截图验收。
-- 体彩接口存在偶发安全拦截；应用请求已携带截图中的站点来源与浏览器标识，且在失败时展示两期已验证兜底数据。
+- Fonts/typography: 使用项目统一 SansSerif；标题、余额、辅助信息和底部导航层级已按参考图分级。
+- Spacing/layout rhythm: 头像区、余额卡、订单卡、4×2 快捷网格、安全列表和底部导航均按同一移动视口重新排列并压缩节奏。
+- Colors/tokens: 深黑背景、午夜蓝表面、香槟金重点、蓝色快捷入口、红色数量徽标均映射到主题色；系统栏同步深色状态。
+- Image quality/assets: 使用生成的高光足球头像与暗金足球卡片背景，素材已复制到 Compose resources 并在运行截图中验证。
+- Copy/content: 账户余额、VIP、成长值、订单状态、快捷入口、安全入口与参考图保持一致。
 
-## 结果
+## Interaction checks
 
-- 排列五选号页已增加“开奖详情”入口，使用体彩 `gameNo=350133` 历史接口，支持最新一期和最近 30 期切换。
-- 排列五接口已验证：最新 `26192` 期，开奖号 `3 0 6 1 4`，销量 `21,949,768`，奖池 `64,701,991.16`。
+- 点击底部“个人”进入个人中心。
+- 点击头像区设置图标或安全列表“设置”进入设置页。
+- 充值、提现、订单和快捷入口均保留可点击反馈。
+- 余额图标可以切换显示/隐藏余额。
+- 深色模式下状态栏、导航栏、底部导航均为深色；亮色/跟随系统逻辑仍由全局主题控制。
+- APK 构建：`:androidApp:assembleDebug` 成功。
+- Logcat 检查：未发现 `FATAL EXCEPTION` 或 `ANR in`。
 
-- 排列三选号页已增加“开奖详情”入口，使用体彩 `gameNo=35` 历史接口，支持最新一期和最近 30 期切换。
-- 排列三接口已验证：最新 `26192` 期，开奖号 `3 0 6`，销量 `41,620,052`，奖级为直选、组选3、组选6。
+## Final result
 
-- 竞彩足球和竞彩篮球页已改为读取官方 `getMatchCalculatorV1.qry` 赛事接口，足球使用 `uniform/football`，篮球使用 `uniform/basketball`。
-- 已验证足球接口返回 2 个业务日期、至少 10 场赛事，包含胜平负 SP；篮球接口返回当前赛程及胜负 SP。页面按业务日期筛选并支持刷新。
+passed
 
-final result: passed
+## Follow-up display fixes (2026-07-29)
+
+- 比赛页比赛时间改为使用主题前景色，深色模式下不再出现深棕色低对比文字。
+- 大乐透/排列三/排列五/七星彩选号页的未选号码球改为主题 surfaceVariant，号码在深色模式下清晰可读。
+- 设置页主题选项文字与开奖详情页标题、开奖表格背景改为主题色，亮色和深色模式均完成回归截图验证。
+- 回归截图：`qa/fixed-matches.png`、`qa/fixed-detail-final.png`、`qa/fixed-result.png`、`qa/fixed-settings-light2.png`、`qa/fixed-settings-follow.png`。
+
+## Hall visual refresh (2026-07-29)
+
+- 移除大厅顶部搜索入口与底部账户余额卡，减少干扰并让彩种入口成为唯一视觉重点。
+- 新增奖杯活动横幅，以及足球、篮球、大乐透、排列三、排列五、七星彩六张独立生成的卡片背景；每张素材均保留左侧文字安全区、右侧展示主体。
+- 模拟器回归截图：`qa/hall-redesign-20260729.png`。
+
+## Match centre follow-up (2026-07-29)
+
+- 深色模式的比赛日选项改为品牌蓝底白字，避免低对比问题。
+- 赛事筛选移除星形/爱心图标；比赛卡的通用星形占位符替换为基于球队名称生成的盾形队徽。
+- 足球、篮球页均在模拟器完成回归：`qa/match-crests-20260729.png`、`qa/match-basketball-crests-20260729.png`。

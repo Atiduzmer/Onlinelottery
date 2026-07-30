@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,11 +46,14 @@ import androidx.compose.ui.unit.dp
 import com.onlinelottery.shared.components.SurfaceCard
 import com.onlinelottery.shared.model.LotteryGame
 import com.onlinelottery.shared.model.LotteryKind
+import com.onlinelottery.shared.model.placeLocalBet
 import com.onlinelottery.shared.theme.AlertRed
 import com.onlinelottery.shared.theme.BrandBlue
 import com.onlinelottery.shared.theme.BrandBlueSoft
 import com.onlinelottery.shared.theme.LiveGreen
+import com.onlinelottery.shared.theme.PrimaryText
 import com.onlinelottery.shared.theme.SecondaryText
+import kotlinx.coroutines.launch
 
 private data class NumberArea(
     val title: String,
@@ -72,13 +76,15 @@ fun NumberLotteryDetailScreen(
     contentPadding: PaddingValues,
     notify: (String) -> Unit,
     onBack: () -> Unit,
-    openResults: (() -> Unit)? = null,
+    openResults: () -> Unit,
 ) {
     val config = remember(game.kind) { numberLotteryConfig(game.kind) }
     var selections by remember(game.kind) {
         mutableStateOf(config.areas.map { emptySet<Int>() })
     }
     var quickPickSeed by remember(game.kind) { mutableIntStateOf(1) }
+    var isSubmitting by remember(game.kind) { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     val complete = config.areas.indices.all { index ->
         selections[index].size == config.areas[index].required
     }
@@ -97,12 +103,8 @@ fun NumberLotteryDetailScreen(
                 DetailHeader(
                     title = game.name,
                     onBack = onBack,
-                    actionLabel = if (game.kind == LotteryKind.SuperLotto || game.kind == LotteryKind.SevenStar || game.kind == LotteryKind.Pick3 || game.kind == LotteryKind.Pick5) "开奖详情" else "玩法说明",
-                    onAction = if (game.kind == LotteryKind.SuperLotto || game.kind == LotteryKind.SevenStar || game.kind == LotteryKind.Pick3 || game.kind == LotteryKind.Pick5) {
-                        openResults ?: { notify("开奖详情正在准备中") }
-                    } else {
-                        { notify("${game.name}玩法说明") }
-                    },
+                    actionLabel = "开奖详情",
+                    onAction = openResults,
                 )
             }
 
@@ -111,17 +113,17 @@ fun NumberLotteryDetailScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(BrandBlue)
+                            .background(BrandBlueSoft)
                             .padding(horizontal = 18.dp, vertical = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(7.dp),
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(config.issue, color = Color.White, style = MaterialTheme.typography.titleMedium)
+                            Text(config.issue, color = BrandBlue, style = MaterialTheme.typography.titleMedium)
                             Spacer(Modifier.weight(1f))
-                            Text("每注 2 元", color = Color.White.copy(alpha = 0.82f))
+                            Text("每注 2 元", color = SecondaryText)
                         }
-                        Text("销售截止 ${config.deadline}", color = Color.White, style = MaterialTheme.typography.headlineSmall)
-                        Text(config.rule, color = Color.White.copy(alpha = 0.78f), style = MaterialTheme.typography.bodySmall)
+                        Text("销售截止 ${config.deadline}", color = PrimaryText, style = MaterialTheme.typography.headlineSmall)
+                        Text(config.rule, color = SecondaryText, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -137,7 +139,7 @@ fun NumberLotteryDetailScreen(
                 ) {
                     Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFFE79A18), modifier = Modifier.size(19.dp))
                     Text(
-                        "模拟选号，仅用于界面演示，不会产生真实交易",
+                        "本地沙盒：提交后会扣减测试余额并生成可查询订单",
                         color = Color(0xFF8C6500),
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(start = 8.dp),
@@ -173,7 +175,7 @@ fun NumberLotteryDetailScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -208,19 +210,46 @@ fun NumberLotteryDetailScreen(
             Button(
                 onClick = {
                     if (complete) {
-                        notify("${game.name}模拟投注已加入待确认")
+                        if (!isSubmitting) {
+                            scope.launch {
+                                isSubmitting = true
+                                val content = selections.joinToString(
+                                    prefix = "{\"type\":\"number\",\"zones\":[",
+                                    postfix = "]}",
+                                ) { zone -> zone.sorted().joinToString(prefix = "[", postfix = "]") }
+                                runCatching {
+                                    placeLocalBet(game.kind.localGameCode(), 200, content)
+                                }.onSuccess { result ->
+                                    notify(result.message)
+                                    selections = config.areas.map { emptySet() }
+                                }.onFailure { error ->
+                                    notify("提交失败：${error.message ?: "本地服务不可用"}")
+                                }
+                                isSubmitting = false
+                            }
+                        }
                     } else {
                         notify("请先完成${game.name}选号")
                     }
                 },
+                enabled = complete && !isSubmitting,
                 colors = ButtonDefaults.buttonColors(containerColor = if (complete) AlertRed else BrandBlue),
                 modifier = Modifier.height(48.dp),
             ) {
                 Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(19.dp))
-                Text("确认选号", modifier = Modifier.padding(start = 6.dp))
+                Text(if (isSubmitting) "提交中…" else "提交投注", modifier = Modifier.padding(start = 6.dp))
             }
         }
     }
+}
+
+private fun LotteryKind.localGameCode(): String = when (this) {
+    LotteryKind.Football -> "FOOTBALL"
+    LotteryKind.Basketball -> "BASKETBALL"
+    LotteryKind.SuperLotto -> "SUPER_LOTTO"
+    LotteryKind.Pick3 -> "PICK_3"
+    LotteryKind.Pick5 -> "PICK_5"
+    LotteryKind.SevenStar -> "SEVEN_STAR"
 }
 
 @Composable
@@ -234,7 +263,7 @@ private fun DetailHeader(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 4.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -288,7 +317,7 @@ private fun NumberAreaCard(
                             modifier = Modifier
                                 .size(ballSize)
                                 .clip(CircleShape)
-                                .background(if (isSelected) area.color else Color(0xFFF1F3F6))
+                                .background(if (isSelected) area.color else MaterialTheme.colorScheme.surfaceVariant)
                                 .clickable { onNumberClick(number) },
                             contentAlignment = Alignment.Center,
                         ) {

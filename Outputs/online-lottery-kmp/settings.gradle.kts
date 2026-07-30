@@ -18,3 +18,4 @@ rootProject.name = "OnlineLottery"
 
 include(":shared")
 include(":androidApp")
+include(":server")
